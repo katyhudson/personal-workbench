@@ -24,7 +24,7 @@
     const data = ensureData();
     const defaults = {
       items: [], projects: [], funds: [], papers: [], patents: [], rprojects: [], books: [],
-      travels: [], anniversaries: [], weights: [], finances: [], habits: [], weekPlans: {}
+      travels: [], anniversaries: [], weights: [], finances: [], habits: [], learnPaths: [], weekPlans: {}
     };
     Object.keys(defaults).forEach(function(key){
       if(data[key] == null) data[key] = Array.isArray(defaults[key]) ? [] : {};

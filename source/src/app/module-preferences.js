@@ -6,6 +6,7 @@
     { id:'life', name:'生活', icon:'🌿', group:'生活管理', description:'统一收纳生活事项、读书、旅行和纪念日。' },
     { id:'sport', name:'健康与运动', shortName:'健康', icon:'🏃', group:'生活管理', description:'从今天出发安排运动，轻松记录完成情况和身体趋势。' },
     { id:'habit', name:'习惯', icon:'🔥', group:'效率管理', description:'记录每日打卡和连续坚持情况。' },
+    { id:'learn', name:'学习', icon:'📚', group:'效率管理', description:'阶段练习与课程列表，支持外链跳转（视频 / 文章）。' },
     { id:'finance', name:'财务', icon:'💰', group:'专业场景', description:'记录收支、预算、基金持仓与净值。' },
     { id:'news', name:'信息热榜', shortName:'热榜', icon:'📰', group:'信息工具', description:'聚合多个信息源；默认关闭，避免打断专注。' }
   ];
@@ -39,6 +40,7 @@
     if(id==='life') return items+(data.books||[]).length+(data.travels||[]).length+(data.anniversaries||[]).length;
     if(id==='sport') return items+(data.weights||[]).length;
     if(id==='habit') return (data.habits||[]).length;
+    if(id==='learn') return (data.learnPaths||[]).length;
     if(id==='finance') return (data.finances||[]).length+(data.funds||[]).length;
     if(id==='news') return 0;
     return items;

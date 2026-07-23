@@ -37,6 +37,7 @@ ORDER = [
     'ui/pages/life-page.js',
     'ui/pages/sport-page.js',
     'ui/pages/habit-page.js',
+    'ui/pages/learn-page.js',
     'ui/pages/review-page.js',
     'app/bootstrap.js',
     'app/store.js',

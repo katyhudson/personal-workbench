@@ -575,6 +575,74 @@
 <div class="modal-acts"><button class="btn" onclick="closeHabit()">取消</button><button class="btn primary" onclick="submitHabit()">保存</button></div>
 </div>
 </div>
+<!-- learn path modal -->
+<div class="mask" id="learnPathMask" onclick="if(event.target===this)closeLearnPathForm()">
+<div class="modal">
+<h3 id="learnPathTitle">新建学习路线</h3>
+<div class="field"><label>路线名称 *</label><input id="lp_title" placeholder="如 小提琴练习 / 英语学习"/></div>
+<div class="field"><label>类型</label>
+<select id="lp_kind">
+<option value="stages">阶段练习（阶段 · 子模块 · 外链按钮）</option>
+<option value="list">课程列表（文章卡片 · 点击跳转）</option>
+</select>
+</div>
+<div class="field"><label>副标题（可选）</label><input id="lp_subtitle" placeholder="如 BBC 随身英语"/></div>
+<div class="field"><label>说明（可选）</label><textarea id="lp_note" placeholder="使用说明，会显示在路线页顶部"></textarea></div>
+<div class="modal-acts">
+<button class="btn" onclick="closeLearnPathForm()">取消</button>
+<button class="btn primary" onclick="submitLearnPath()">保存</button>
+</div>
+</div>
+</div>
+<!-- learn stage modal -->
+<div class="mask" id="learnStageMask" onclick="if(event.target===this)closeLearnStageForm()">
+<div class="modal">
+<h3 id="learnStageTitle">新建阶段</h3>
+<div class="field"><label>阶段标题 *</label><input id="ls_title" placeholder="如 第1阶段 · 准备与空弦运弓"/></div>
+<div class="field"><label>目标</label><textarea id="ls_goal" placeholder="本阶段要达成什么"></textarea></div>
+<div class="field"><label>过关标准</label><textarea id="ls_criteria" placeholder="怎样算掌握"></textarea></div>
+<div class="modal-acts">
+<button class="btn" onclick="closeLearnStageForm()">取消</button>
+<button class="btn primary" onclick="submitLearnStage()">保存</button>
+</div>
+</div>
+</div>
+<!-- learn module modal -->
+<div class="mask" id="learnModuleMask" onclick="if(event.target===this)closeLearnModuleForm()">
+<div class="modal">
+<h3 id="learnModuleTitle">新建子模块</h3>
+<div class="field"><label>标题 *</label><input id="lm_title" placeholder="如 认识乐器 &amp; 调音"/></div>
+<div class="field"><label>说明</label><textarea id="lm_desc" placeholder="练习要点"></textarea></div>
+<div class="field"><label>外链按钮（每行：文案 | 链接，可选第三段 primary）</label>
+<textarea id="lm_links" placeholder="看教学视频 | https://&#10;B站搜更多 | https://&#10;抖音跟练 | https://" rows="5"></textarea>
+</div>
+<div class="modal-acts">
+<button class="btn" onclick="closeLearnModuleForm()">取消</button>
+<button class="btn primary" onclick="submitLearnModule()">保存</button>
+</div>
+</div>
+</div>
+<!-- learn item modal -->
+<div class="mask" id="learnItemMask" onclick="if(event.target===this)closeLearnItemForm()">
+<div class="modal">
+<h3 id="learnItemTitle">新建文章</h3>
+<div class="field"><label>标题 *</label><input id="li_title" placeholder="English title"/></div>
+<div class="field"><label>中文副标题</label><input id="li_subtitle" placeholder="中文说明"/></div>
+<div class="row">
+<div class="field" style="margin:0;flex:1"><label>标签</label><input id="li_tag" placeholder="BBC"/></div>
+<div class="field" style="margin:0;flex:1"><label>词数</label><input id="li_words" placeholder="365"/></div>
+</div>
+<div class="row">
+<div class="field" style="margin:0;flex:1"><label>时长</label><input id="li_duration" placeholder="2:30"/></div>
+<div class="field" style="margin:0;flex:1"><label>词汇量</label><input id="li_vocab" placeholder="3500"/></div>
+</div>
+<div class="field"><label>跳转链接 *</label><input id="li_url" placeholder="https://..." type="url"/></div>
+<div class="modal-acts">
+<button class="btn" onclick="closeLearnItemForm()">取消</button>
+<button class="btn primary" onclick="submitLearnItem()">保存</button>
+</div>
+</div>
+</div>
 <!-- day modal -->
 <div class="mask" id="dayMask" onclick="if(event.target===this)closeDay()">
 <div class="modal"><div id="dayBody"></div></div>

@@ -16,6 +16,7 @@
       weights: d.weights || [],
       finances: d.finances || [],
       habits: d.habits || [],
+      learnPaths: d.learnPaths || [],
       weekPlans: d.weekPlans || {},
       targetWeight: safeOwn(d, 'targetWeight') ? d.targetWeight : null,
       monthlyBudget: safeOwn(d, 'monthlyBudget') ? d.monthlyBudget : null,

@@ -50,6 +50,7 @@
       reg.register('overview', function(){ return global.decorOverview(global.renderOverview()); });
       reg.register('review', function(){ return global.renderReview(); });
       reg.register('habit', function(){ return global.renderHabits(); });
+      reg.register('learn', function(){ return global.renderLearn ? global.renderLearn() : ''; });
       reg.register('news', function(){ global.renderNews(); return null; });
       reg.register('calendar', renderCalendarPage);
       reg.register('finance', function(){ return global.renderFunds(); });

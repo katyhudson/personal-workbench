@@ -56,6 +56,7 @@ function v5RefreshBadges(){
   const habits = data.habits||[];
   const noHit = habits.filter(h=>!h.logs || !h.logs[todayKey]).length;
   setBid('bd-habit', noHit || '');
+  setBid('bd-learn', (data.learnPaths||[]).length || '');
   // 金融: 本月结余
   const mNow=today.slice(0,7);
   let inc=0,exp=0;
@@ -214,6 +215,8 @@ function v4CloseAnyModal(){
       rprojMask:closeRProj,fundMask:closeFund,navMask:closeNav,bookMask:closeBook,
       travelMask:closeTravel,annivMask:closeAnniversary,weightMask:closeWeight,planMask:closePlan,
       financeMask:closeFinance,habitMask:closeHabit,newsMask:closeNewsMgr,
+      learnPathMask:closeLearnPathForm,learnStageMask:closeLearnStageForm,
+      learnModuleMask:closeLearnModuleForm,learnItemMask:closeLearnItemForm,
       cmdkMask:closeCmdK,cheatMask:closeCheatsheet,syncMask:closeSync,bakMask:closeBak,
       dayMask:closeDay})[m.id];
     if(fn) try{fn();}catch(e){m.classList.remove('show');}
@@ -479,7 +482,7 @@ function v4SetEdit(kind,id){v4CurrentEdit.kind=kind;v4CurrentEdit.id=id;}
 
 
 
-var data={items:[],projects:[],funds:[],papers:[],patents:[],rprojects:[],books:[],travels:[],anniversaries:[],weights:[],finances:[],habits:[],targetWeight:null,monthlyBudget:null,theme:'light',weekPlans:{}};
+var data={items:[],projects:[],funds:[],papers:[],patents:[],rprojects:[],books:[],travels:[],anniversaries:[],weights:[],finances:[],habits:[],learnPaths:[],targetWeight:null,monthlyBudget:null,theme:'light',weekPlans:{}};
 var currentCat='work';
 var calScope='work';
 var calView='month';
@@ -512,6 +515,7 @@ function load(){
   if(!data.anniversaries)data.anniversaries=[];
   if(!data.weights)data.weights=[];
   if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];
+  if(!data.learnPaths)data.learnPaths=[];
   if(!data.weekPlans)data.weekPlans={};
   expandFinanceRecur();
   if(!data.theme)data.theme='light';
@@ -581,7 +585,7 @@ function restoreBak(ts){
   const b=loadBak().find(x=>x.ts===ts);if(!b)return;
   const d=b.data||{};
   data=Object.assign({items:[],projects:[],funds:[],papers:[],patents:[],rprojects:[],books:[],travels:[],anniversaries:[],weights:[],finances:[],theme:'light',weekPlans:{}},d);
-  if(!data.items)data.items=[];if(!data.projects)data.projects=[];if(!data.funds)data.funds=[];if(!data.papers)data.papers=[];if(!data.patents)data.patents=[];if(!data.rprojects)data.rprojects=[];if(!data.books)data.books=[];if(!data.travels)data.travels=[];if(!data.anniversaries)data.anniversaries=[];if(!data.weights)data.weights=[];if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];if(!data.weekPlans)data.weekPlans={};if(!data.theme)data.theme='light';
+  if(!data.items)data.items=[];if(!data.projects)data.projects=[];if(!data.funds)data.funds=[];if(!data.papers)data.papers=[];if(!data.patents)data.patents=[];if(!data.rprojects)data.rprojects=[];if(!data.books)data.books=[];if(!data.travels)data.travels=[];if(!data.anniversaries)data.anniversaries=[];if(!data.weights)data.weights=[];if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];if(!data.learnPaths)data.learnPaths=[];if(!data.weekPlans)data.weekPlans={};if(!data.theme)data.theme='light';
   save();render();renderBak();
   alert('已恢复到 '+fmtBak(ts));
 }
@@ -662,7 +666,7 @@ function render(){
   // 同步运行时状态到新架构 store（legacy 全局 → store），保证 selectors 取到最新 currentCat / searchKw
   try { if(global.WorkbenchStore && typeof global.WorkbenchStore.setState==='function') global.WorkbenchStore.setState({ currentCat: currentCat, searchKw: searchKw }); } catch(e){}
   // 新架构统一入口：已注册模块优先走 ModuleRegistry（含错误隔离），失败再回退下方 legacy 实现
-  if(['work','research','life','sport','finance','overview','habit','review'].indexOf(currentCat)>=0){
+  if(['work','research','life','sport','finance','overview','habit','review','learn'].indexOf(currentCat)>=0){
     try {
       if(global.WorkbenchModuleRegistry && typeof global.WorkbenchModuleRegistry.render==='function'){
         var _html = global.WorkbenchModuleRegistry.render(currentCat);
@@ -677,6 +681,7 @@ function render(){
   if(currentCat==='overview'){app.innerHTML=decorOverview(renderOverview());return;}
   if(currentCat==='review'){app.innerHTML=renderReview();return;}
   if(currentCat==='habit'){app.innerHTML=renderHabits();return;}
+  if(currentCat==='learn'){app.innerHTML=(typeof renderLearn==='function'?renderLearn():'');return;}
   if(currentCat==='news'){renderNews();return;}
   if(currentCat==='calendar'){
     const sc=calScope;
@@ -3032,7 +3037,7 @@ async function syncPull(){
       const rs=remote.savedAt||0, ls=data.__savedAt||0;
       if(rs>ls){
         data=remote.data;
-        if(!data.items)data.items=[];if(!data.projects)data.projects=[];if(!data.funds)data.funds=[];if(!data.papers)data.papers=[];if(!data.patents)data.patents=[];if(!data.rprojects)data.rprojects=[];if(!data.books)data.books=[];if(!data.travels)data.travels=[];if(!data.anniversaries)data.anniversaries=[];        if(!data.weights)data.weights=[];if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];if(!data.weekPlans)data.weekPlans={};if(!data.theme)data.theme='light';
+        if(!data.items)data.items=[];if(!data.projects)data.projects=[];if(!data.funds)data.funds=[];if(!data.papers)data.papers=[];if(!data.patents)data.patents=[];if(!data.rprojects)data.rprojects=[];if(!data.books)data.books=[];if(!data.travels)data.travels=[];if(!data.anniversaries)data.anniversaries=[];        if(!data.weights)data.weights=[];if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];if(!data.learnPaths)data.learnPaths=[];if(!data.weekPlans)data.weekPlans={};if(!data.theme)data.theme='light';
         expandFinanceRecur();
         data.__savedAt=rs;localStorage.setItem(STORE,JSON.stringify(data));render();
         syncSetDot('ok','已同步 '+new Date().toLocaleTimeString());
@@ -3105,7 +3110,7 @@ startSyncPoll();
 /* 同浏览器多标签页：其他标签页改写 localStorage 时本页即时同步 */
 window.addEventListener('storage',e=>{
   if(e.key===STORE&&e.newValue){
-    try{const d=JSON.parse(e.newValue);if(d&&d.items&&(d.__savedAt||0)>(data.__savedAt||0)){data=d;if(!data.papers)data.papers=[];if(!data.patents)data.patents=[];if(!data.rprojects)data.rprojects=[];if(!data.books)data.books=[];if(!data.travels)data.travels=[];if(!data.anniversaries)data.anniversaries=[];if(!data.weights)data.weights=[];if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];render();}}catch(_){}
+    try{const d=JSON.parse(e.newValue);if(d&&d.items&&(d.__savedAt||0)>(data.__savedAt||0)){data=d;if(!data.papers)data.papers=[];if(!data.patents)data.patents=[];if(!data.rprojects)data.rprojects=[];if(!data.books)data.books=[];if(!data.travels)data.travels=[];if(!data.anniversaries)data.anniversaries=[];if(!data.weights)data.weights=[];if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];if(!data.learnPaths)data.learnPaths=[];render();}}catch(_){}
   }
 });
 document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
