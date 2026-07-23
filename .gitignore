@@ -1,0 +1,7 @@
+desktop/build/
+desktop/dist/
+desktop/.venv/
+desktop/*.spec.bak
+__pycache__/
+*.pyc
+.DS_Store
