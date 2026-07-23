@@ -49,6 +49,7 @@
   }
   global.openLearnExternalUrl = function(el){
     var url = el && el.getAttribute ? el.getAttribute('data-url') : el;
+    url = normalizeUrl(url);
     if(!url){ toast('未设置链接'); return; }
     openUrl(url);
   };
@@ -100,12 +101,16 @@
 
   function looksLikeUrl(s){
     s = String(s == null ? '' : s).trim();
-    return /^https?:\/\//i.test(s) || /^www\./i.test(s);
+    if(!s || /\s/.test(s)) return false;
+    if(/^https?:\/\//i.test(s) || /^\/\//.test(s) || /^www\./i.test(s)) return true;
+    // baidu.com / bilibili.com/video/xxx 等无协议域名
+    return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+([\/?#].*)?$/i.test(s);
   }
   function normalizeUrl(s){
     s = String(s == null ? '' : s).trim();
     if(!s) return '';
-    if(!/^https?:\/\//i.test(s)) s = 'https://' + s.replace(/^\/\//, '');
+    if(/^\/\//.test(s)) return 'https:' + s;
+    if(!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s;
     return s;
   }
   function pathQuickUrl(p){
