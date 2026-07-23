@@ -5659,6 +5659,20 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
 
 /* ===== FILE: main.js ===== */
 (function(global){
+  function syncVisualViewport(){
+    try{
+      var vv = global.visualViewport;
+      var h = vv && vv.height ? vv.height : global.innerHeight;
+      document.documentElement.style.setProperty('--vv-height', Math.round(h) + 'px');
+    }catch(e){}
+  }
+  syncVisualViewport();
+  if(global.visualViewport){
+    global.visualViewport.addEventListener('resize', syncVisualViewport);
+    global.visualViewport.addEventListener('scroll', syncVisualViewport);
+  }
+  global.addEventListener('resize', syncVisualViewport);
+
   try {
     if(global.WorkbenchBootstrap && typeof global.WorkbenchBootstrap.run === 'function'){
       global.WorkbenchBootstrap.run();
