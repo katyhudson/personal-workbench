@@ -5038,6 +5038,36 @@ document.querySelector('#nav .tab[data-cat="overview"]').classList.add('active')
     return 'learn-st-locked';
   }
 
+  function looksLikeUrl(s){
+    s = String(s == null ? '' : s).trim();
+    return /^https?:\/\//i.test(s) || /^www\./i.test(s);
+  }
+  function normalizeUrl(s){
+    s = String(s == null ? '' : s).trim();
+    if(!s) return '';
+    if(!/^https?:\/\//i.test(s)) s = 'https://' + s.replace(/^\/\//, '');
+    return s;
+  }
+  function pathQuickUrl(p){
+    if(!p) return '';
+    if(p.quickUrl) return normalizeUrl(p.quickUrl);
+    if(looksLikeUrl(p.subtitle)) return normalizeUrl(p.subtitle);
+    if(looksLikeUrl(p.note)) return normalizeUrl(p.note);
+    return '';
+  }
+  function pathSubtitleText(p){
+    if(!p) return '';
+    if(looksLikeUrl(p.subtitle)) return '';
+    return p.subtitle || '';
+  }
+  function jumpBtn(url, label, primary){
+    url = normalizeUrl(url);
+    if(!url) return '';
+    var cls = primary ? 'learn-link primary' : 'learn-link';
+    return '<button type="button" class="'+cls+'" data-url="'+esc(url)+'" onclick="event.stopPropagation();openLearnExternalUrl(this)">'
+      + (primary ? '▶ ' : '') + esc(label || '打开链接') + '</button>';
+  }
+
   function renderHome(){
     var list = paths();
     var html = '<div class="panel learn-panel"><div class="sec-head"><h2>📚 学习路线</h2>'
@@ -5052,9 +5082,12 @@ document.querySelector('#nav .tab[data-cat="overview"]').classList.add('active')
       var meta = p.kind === 'list'
         ? ((p.items || []).length + ' 篇文章')
         : ((p.stages || []).length + ' 个阶段');
+      var sub = pathSubtitleText(p);
+      var qurl = pathQuickUrl(p);
       html += '<div class="learn-path-card" onclick="openLearnPath(\''+esc(p.id)+'\')">'
         + '<div class="learn-path-title">'+(p.kind==='list'?'🌐 ':'🎻 ')+esc(p.title||'未命名')+'</div>'
-        + '<div class="learn-path-meta">'+esc(meta)+(p.subtitle ? ' · '+esc(p.subtitle) : '')+'</div>'
+        + '<div class="learn-path-meta">'+esc(meta)+(sub ? ' · '+esc(sub) : '')+'</div>'
+        + (qurl ? '<div class="learn-links" style="margin-top:10px" onclick="event.stopPropagation()">'+jumpBtn(qurl, '打开链接', true)+'</div>' : '')
         + '<div class="learn-path-acts" onclick="event.stopPropagation()">'
         + '<button class="icon-btn" type="button" title="编辑" onclick="openLearnPathForm(\''+esc(p.id)+'\')">✎</button>'
         + '<button class="icon-btn" type="button" title="删除" onclick="delLearnPath(\''+esc(p.id)+'\')">🗑</button>'
@@ -5136,11 +5169,16 @@ document.querySelector('#nav .tab[data-cat="overview"]').classList.add('active')
     }
     list.forEach(function(p){
       ensurePathShape(p);
+      var sub = pathSubtitleText(p);
+      var qurl = pathQuickUrl(p);
       html += '<div class="learn-home-path">';
       html += '<div class="learn-home-path-title" onclick="ensureLearnEnabled();openLearnPath(\''+esc(p.id)+'\');setView(\'learn\')">'
         + (p.kind==='list'?'🌐 ':'🎻 ')+esc(p.title||'未命名')
-        + (p.subtitle ? '<span class="learn-home-sub"> · '+esc(p.subtitle)+'</span>' : '')
+        + (sub ? '<span class="learn-home-sub"> · '+esc(sub)+'</span>' : '')
         + '</div>';
+      if(qurl){
+        html += '<div class="learn-links" style="margin:0 0 10px">'+jumpBtn(qurl, '打开链接', true)+'</div>';
+      }
       if(p.kind === 'list'){
         var items = (p.items || []).slice(0, 8);
         if(!items.length) html += '<div class="empty">暂无文章</div>';
@@ -5150,12 +5188,12 @@ document.querySelector('#nav .tab[data-cat="overview"]').classList.add('active')
             + (it.tag ? ' <span class="learn-tag">'+esc(it.tag)+'</span>' : '') + '</div>'
             + (it.subtitle ? '<div class="learn-article-sub">'+esc(it.subtitle)+'</div>' : '')
             + '<div class="learn-links">'
-            + '<button type="button" class="learn-link primary" data-url="'+esc(it.url||'')+'" onclick="event.stopPropagation();openLearnExternalUrl(this)">▶ 打开学习</button>'
+            + jumpBtn(it.url, '打开学习', true)
             + '<button type="button" class="btn" onclick="event.stopPropagation();bumpLearnListen(\''+esc(p.id)+'\',\''+esc(it.id)+'\')">已听 +1</button>'
             + '</div></div>';
         });
       } else {
-        if(p.note) html += '<div class="learn-list-note">'+esc(p.note)+'</div>';
+        if(p.note && !looksLikeUrl(p.note)) html += '<div class="learn-list-note">'+esc(p.note)+'</div>';
         html += renderStagesBody(p, { compact: true });
       }
       html += '</div>';
@@ -5222,8 +5260,9 @@ document.querySelector('#nav .tab[data-cat="overview"]').classList.add('active')
     document.getElementById('learnPathTitle').textContent = id ? '编辑学习路线' : '新建学习路线';
     document.getElementById('lp_title').value = p ? (p.title || '') : '';
     document.getElementById('lp_kind').value = p ? (p.kind || 'stages') : 'stages';
-    document.getElementById('lp_subtitle').value = p ? (p.subtitle || '') : '';
-    document.getElementById('lp_note').value = p ? (p.note || '') : '';
+    document.getElementById('lp_subtitle').value = p ? pathSubtitleText(p) : '';
+    document.getElementById('lp_url').value = p ? pathQuickUrl(p) : '';
+    document.getElementById('lp_note').value = p && !looksLikeUrl(p.note) ? (p.note || '') : (p && looksLikeUrl(p.note) ? '' : '');
     document.getElementById('learnPathMask').classList.add('show');
     document.getElementById('lp_title').focus();
   };
@@ -5233,14 +5272,16 @@ document.querySelector('#nav .tab[data-cat="overview"]').classList.add('active')
     if(!title){ alert('请填写路线名称'); return; }
     var kind = document.getElementById('lp_kind').value || 'stages';
     var subtitle = document.getElementById('lp_subtitle').value.trim();
+    var quickUrl = normalizeUrl(document.getElementById('lp_url').value.trim());
     var note = document.getElementById('lp_note').value.trim();
+    if(looksLikeUrl(subtitle) && !quickUrl){ quickUrl = normalizeUrl(subtitle); subtitle = ''; }
     if(editing.pathId){
       var p = findPath(editing.pathId);
       if(!p) return;
-      p.title = title; p.kind = kind; p.subtitle = subtitle; p.note = note;
+      p.title = title; p.kind = kind; p.subtitle = subtitle; p.note = note; p.quickUrl = quickUrl;
       ensurePathShape(p);
     } else {
-      var np = { id: uid(), title: title, kind: kind, subtitle: subtitle, note: note, stages: [], items: [] };
+      var np = { id: uid(), title: title, kind: kind, subtitle: subtitle, note: note, quickUrl: quickUrl, stages: [], items: [] };
       if(kind === 'stages'){
         np.stages = [{ id: uid(), title: '第1阶段', goal: '', criteria: '', status: 'active', modules: [] }];
       }
