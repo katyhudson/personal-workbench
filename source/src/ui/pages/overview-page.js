@@ -1,9 +1,18 @@
 (function(global){
+  function learnBlock(){
+    try {
+      if(typeof global.renderLearnOverviewSection === 'function') return global.renderLearnOverviewSection();
+    } catch(e) {
+      console.error('[Workbench] learn overview section failed', e);
+    }
+    return '';
+  }
   global.decorOverview = function(html){
+    var learn = learnBlock();
     try {
       if(global.WorkbenchOverviewDomain && typeof global.WorkbenchOverviewDomain.buildOverviewEnhancements === 'function'){
         var extras = global.WorkbenchOverviewDomain.buildOverviewEnhancements();
-        return (extras.banner || '') + (extras.recent || '') + (extras.sizeWarn || '') + (extras.kpi || '') + (extras.health || '') + html;
+        return learn + (extras.banner || '') + (extras.recent || '') + (extras.sizeWarn || '') + (extras.kpi || '') + (extras.health || '') + html;
       }
     } catch(e) {
       console.error('[Workbench] decorOverview enhancement failed, using base overview', e);
@@ -11,6 +20,6 @@
     // Fallback: basic banner from legacy helper functions
     var banner = typeof global.v5DailyBanner === 'function' ? global.v5DailyBanner() : '';
     var recent = typeof global.v5RecentQuickAdds === 'function' ? global.v5RecentQuickAdds() : '';
-    return banner + recent + html;
+    return learn + banner + recent + html;
   };
 })(window);

@@ -435,34 +435,12 @@ const _v4DraftMo=new MutationObserver(rs=>{
   });
 });
 
-/* ------- 概览装饰：KPI 卡片 + 折叠 + schema 提示 ------- */
+/* ------- 概览装饰：学习卡片 + 横幅 ------- */
 function decorOverview(html){
-  const today=todayStr();
+  var learn = (typeof renderLearnOverviewSection === 'function') ? renderLearnOverviewSection() : '';
   const banner=v5DailyBanner();
   const recent=v5RecentQuickAdds();
-  return banner + recent + html;
-  const td=data.items.filter(i=>i.status!=='done' && i.due===today).length;
-  const od=data.items.filter(i=>i.status!=='done' && i.due && i.due<today).length;
-  const wk=data.items.filter(i=>i.cat==='sport' && i.due && daysBetween(i.due,today)<=0 && daysBetween(i.due,today)>=-6);
-  const wkMins=wk.reduce((s,i)=>s+(+i.minutes||0),0);
-  const mNow=new Date().toISOString().slice(0,7);
-  let inc=0,exp=0;
-(data.finances||[]).forEach(f=>{if(!f.gen&&f.status!=='planned'&&f.status!=='skipped'&&f.date&&f.date<=today&&f.date.slice(0,7)===mNow){if(f.type==='income') inc+=+f.amount||0; else exp+=+f.amount||0;}});
-  const bal=inc-exp;
-  const kpi =
-    '<div class="today-mustdo" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'
-    +v5Top3Today()
-    +'</div>'
-    +'<div class="today-mustdo" style="background:transparent;border:0;box-shadow:none;padding:0;margin-top:6px">'
-    +'<div class="today-mc"><div class="t">🚨 已逾期</div><div class="n" style="color:'+(od>0?'#ef4444':'var(--text)')+'">'+od+'</div><div class="d">条需立即处理</div></div>'
-    +'<div class="today-mc"><div class="t">⏰ 今日截止</div><div class="n">'+td+'</div><div class="d">条日程</div></div>'
-    +'<div class="today-mc"><div class="t">🏃 本周运动</div><div class="n">'+wkMins+'</div><div class="d">分（目标 ≥150）</div></div>'
-    +'<div class="today-mc"><div class="t">💰 本月结余</div><div class="n" style="color:'+(bal>=0?'#10b981':'#ef4444')+'">'+(bal>=0?'+':'-')+Math.abs(bal).toFixed(2)+'</div><div class="d">元</div></div>'
-    +'</div>';
-  // 数据体量自检
-  let sizeWarn='';
-  try{const sz=JSON.stringify(data).length;if(sz>1.5*1024*1024) sizeWarn='<div class="bulk-bar" style="border-color:#f59e0b;color:#92400e">⚠️ 本地数据 '+(sz/1024/1024).toFixed(1)+' MB，已接近浏览器上限，建议备份后导出归档。</div>';}catch(e){}
-  return sizeWarn + kpi + html;
+  return learn + banner + recent + html;
 }
 
 /* ------- 启动：注册 MutationObserver ------- */
@@ -485,7 +463,7 @@ function v4SetEdit(kind,id){v4CurrentEdit.kind=kind;v4CurrentEdit.id=id;}
 
 
 var data={items:[],projects:[],funds:[],papers:[],patents:[],rprojects:[],books:[],travels:[],anniversaries:[],weights:[],finances:[],habits:[],learnPaths:[],targetWeight:null,monthlyBudget:null,theme:'light',weekPlans:{}};
-var currentCat='work';
+var currentCat='overview';
 var calScope='work';
 var calView='month';
 var calAnchor=todayStr();
@@ -3115,7 +3093,7 @@ window.addEventListener('storage',e=>{
     try{const d=JSON.parse(e.newValue);if(d&&d.items&&(d.__savedAt||0)>(data.__savedAt||0)){data=d;if(!data.papers)data.papers=[];if(!data.patents)data.patents=[];if(!data.rprojects)data.rprojects=[];if(!data.books)data.books=[];if(!data.travels)data.travels=[];if(!data.anniversaries)data.anniversaries=[];if(!data.weights)data.weights=[];if(!data.finances)data.finances=[];if(!data.habits)data.habits=[];if(!data.learnPaths)data.learnPaths=[];render();}}catch(_){}
   }
 });
-document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
+document.querySelector('#nav .tab[data-cat="overview"]').classList.add('active');
 
 
 
@@ -4252,11 +4230,20 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
 
 /* ===== FILE: ui/pages/overview-page.js ===== */
 (function(global){
+  function learnBlock(){
+    try {
+      if(typeof global.renderLearnOverviewSection === 'function') return global.renderLearnOverviewSection();
+    } catch(e) {
+      console.error('[Workbench] learn overview section failed', e);
+    }
+    return '';
+  }
   global.decorOverview = function(html){
+    var learn = learnBlock();
     try {
       if(global.WorkbenchOverviewDomain && typeof global.WorkbenchOverviewDomain.buildOverviewEnhancements === 'function'){
         var extras = global.WorkbenchOverviewDomain.buildOverviewEnhancements();
-        return (extras.banner || '') + (extras.recent || '') + (extras.sizeWarn || '') + (extras.kpi || '') + (extras.health || '') + html;
+        return learn + (extras.banner || '') + (extras.recent || '') + (extras.sizeWarn || '') + (extras.kpi || '') + (extras.health || '') + html;
       }
     } catch(e) {
       console.error('[Workbench] decorOverview enhancement failed, using base overview', e);
@@ -4264,7 +4251,7 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
     // Fallback: basic banner from legacy helper functions
     var banner = typeof global.v5DailyBanner === 'function' ? global.v5DailyBanner() : '';
     var recent = typeof global.v5RecentQuickAdds === 'function' ? global.v5RecentQuickAdds() : '';
-    return banner + recent + html;
+    return learn + banner + recent + html;
   };
 })(window);
 
@@ -4272,11 +4259,8 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
 (function(global){
   function esc(s){ return global.esc ? global.esc(s) : String(s == null ? '' : s); }
   global.renderOverview = function(){
-    var html = '';
-    if(typeof global.renderLearnOverviewSection === 'function'){
-      html += global.renderLearnOverviewSection();
-    }
-    html+='<div class="grid cards">';
+    // 学习区由 decorOverview 统一注入，避免重复
+    var html='<div class="grid cards">';
     for(var c in global.CATS){
       if(global.WorkbenchModules && !global.WorkbenchModules.isCategoryVisible(c)) continue;
       if(c==='finance'){
