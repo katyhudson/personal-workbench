@@ -4,8 +4,6 @@
 
 默认导航：**今天 / 工作 / 日历 / 回顾 / 更多**。财务、科研、生活、健康、习惯、热榜可在「更多」中按需启用。
 
-本分支 / 本仓库**只含工作台**，不含其他项目代码。
-
 许可沿用上游：个人使用，欢迎自行修改。
 
 ---
@@ -14,65 +12,88 @@
 
 ### 1. 便携 HTML（最轻）
 
-用浏览器打开：
+用浏览器直接打开：
 
-- `index.html`（仓库根目录，适合 GitHub Pages）
-- 或 `portable/个人工作台.html`
+`personal-workbench/portable/个人工作台.html`
+
+适合自己用，或把整个 `portable/` 文件夹发给别人。
 
 ### 2. Windows exe（发给同事双击即用）
 
-不需要注册、不需要填写 GitHub。本机预览：
+- **不需要**注册，**不需要**填写 GitHub，双击即可使用。
+- 每人数据在自己电脑上，互不可见。
+- 在本仓库 GitHub Actions 中运行 workflow **「Build Personal Workbench Windows EXE」**，下载 artifact `personal-workbench-windows`，把其中的 `个人工作台` 文件夹（含 exe）发给对方即可。
+
+本机预览桌面窗（macOS / Windows）：
 
 ```bash
-cd desktop
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python app.py
+cd personal-workbench/desktop
+python -m pip install -r requirements.txt
+python app.py
 ```
 
-Windows 打包可用 Actions「Build Personal Workbench Windows EXE」（若已配置），或本机 PyInstaller：
+### 3. 在线网页（可选，别人访问你的地址）
 
-```bash
-cd desktop
-.venv/bin/pyinstaller build_windows.spec --noconfirm --clean
-```
+部署后，其他人打开的是**你的** GitHub Pages 地址，例如：
 
-### 3. 在线网页（免费 GitHub Pages）
+`https://<你的用户名>.github.io/<仓库名>/`
 
-请使用**仅含本工作台的公开仓库**开启 Pages（私有仓库的 Pages 需付费）。
+启用步骤（本仓库远程为 `katyhudson/newproject`）：
 
-1. 仓库 **Settings → Pages → Build and deployment → Source**
-2. 选 **Deploy from a branch**：Branch = `main`（或本分支名），Folder = `/`（根目录）
-3. 保存后访问：`https://<你的用户名>.github.io/<仓库名>/`
+1. **先把代码推到 GitHub**（至少包含 `personal-workbench/` 与 `.github/workflows/personal-workbench-pages.yml`）
+2. 打开仓库：**Settings → Pages → Build and deployment → Source**，选 **GitHub Actions**
+3. 打开 **Actions** → 选 workflow **「Deploy Personal Workbench Pages」** → **Run workflow**（或 push 触发）
+4. 部署成功后，用浏览器访问：
 
-说明：别人打开的是你的网址；每人数据仍在各自浏览器本地。
+   `https://katyhudson.github.io/newproject/`
+
+   （若仓库改名或换账号，地址变为 `https://<用户名>.github.io/<仓库名>/`）
+
+说明：
+
+- 别人打开的是**你的**这个网址；每人填写的记事/财务仍只存在**各自浏览器**，不会写到你的 GitHub，也不会互相看到。
+- 清除浏览器站点数据会丢本地记录，重要数据请在「更多」里导出备份。
 
 ---
 
 ## 可选：Gist 多设备同步
 
-在应用内 **更多 → 同步设置** 中，用**自己的** GitHub Token + Gist。不要共用 Token / Gist。
+仅在「想换电脑还保留数据」时需要。在应用内 **更多 → 同步设置** 中，用**自己的** GitHub Token + Gist 配置。
+
+- 不要把 Token 发给别人
+- 不要多人共用同一个 Gist（会互相覆盖）
+- 单机使用完全可以不配置
 
 ---
 
-## 目录
+## 目录结构
 
 ```
-index.html / assets/   # Pages 入口
-portable/              # 便携版
-source/                # 模块化源码
-desktop/               # pywebview 桌面壳
-docs/                  # 升级说明
+personal-workbench/
+  portable/                 # 浏览器 / Pages / exe 内嵌页面
+  source/                   # 模块化源码
+  desktop/                  # pywebview 桌面壳 + PyInstaller
+  docs/v4.1_升级说明.md
 ```
 
-重建便携版：
+重新打包便携版：
 
 ```bash
-cd source && python3 scripts/build_portable.py
+cd personal-workbench/source
+python scripts/build_portable.py
 ```
 
-测试：
+跑源码测试：
 
 ```bash
-cd source && node --test tests/*.test.js
+cd personal-workbench/source
+node --test tests/*.test.js
 ```
+
+---
+
+## 数据安全提示
+
+- 默认不上传服务器；Pages 只托管静态页面。
+- 换电脑 / 重装系统前请导出 JSON，或配置自己的 Gist。
+- exe 与浏览器、在线版的 localStorage **默认不互通**，需自行导出导入或靠 Gist。
