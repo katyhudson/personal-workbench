@@ -4272,7 +4272,11 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
 (function(global){
   function esc(s){ return global.esc ? global.esc(s) : String(s == null ? '' : s); }
   global.renderOverview = function(){
-    var html='<div class="grid cards">';
+    var html = '';
+    if(typeof global.renderLearnOverviewSection === 'function'){
+      html += global.renderLearnOverviewSection();
+    }
+    html+='<div class="grid cards">';
     for(var c in global.CATS){
       if(global.WorkbenchModules && !global.WorkbenchModules.isCategoryVisible(c)) continue;
       if(c==='finance'){
@@ -4999,6 +5003,34 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
     if(!url) return;
     try{ global.open(url, '_blank', 'noopener,noreferrer'); }catch(e){ location.href = url; }
   }
+  global.openLearnExternalUrl = function(el){
+    var url = el && el.getAttribute ? el.getAttribute('data-url') : el;
+    if(!url){ toast('未设置链接'); return; }
+    openUrl(url);
+  };
+  function renderLinkButtons(links){
+    return (links || []).map(function(lk){
+      if(!lk || !lk.url) return '';
+      var cls = lk.style === 'primary' ? 'learn-link primary' : 'learn-link';
+      var icon = lk.style === 'primary' ? '▶ ' : '';
+      return '<button type="button" class="'+cls+'" data-url="'+esc(lk.url)+'" onclick="event.stopPropagation();openLearnExternalUrl(this)">'
+        + icon + esc(lk.label || '打开') + '</button>';
+    }).join('');
+  }
+  function ensureLearnEnabled(){
+    if(global.WorkbenchModules && typeof global.WorkbenchModules.setEnabled === 'function'){
+      if(!global.WorkbenchModules.isEnabled('learn')) global.WorkbenchModules.setEnabled('learn', true);
+    }
+  }
+  global.ensureLearnAndOpen = function(){
+    ensureLearnEnabled();
+    setActivePathId(null);
+    if(typeof global.setView === 'function') global.setView('learn');
+  };
+  global.ensureLearnAndNew = function(){
+    ensureLearnEnabled();
+    if(typeof global.openLearnPathForm === 'function') global.openLearnPathForm();
+  };
 
   var editing = { pathId:null, stageId:null, moduleId:null, itemId:null };
 
@@ -5048,19 +5080,20 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
     return html;
   }
 
-  function renderStagesPath(p){
-    var html = '<div class="learn-topbar"><button class="btn" type="button" onclick="closeLearnPath()">← 返回</button>'
-      + '<h2 class="learn-h2">'+esc(p.title)+'</h2>'
-      + '<button class="btn" type="button" onclick="openLearnPathForm(\''+esc(p.id)+'\')">编辑路线</button>'
-      + '<button class="btn primary" type="button" onclick="openLearnStageForm(\''+esc(p.id)+'\')">＋ 阶段</button></div>';
-    if(p.note) html += '<div class="hint" style="margin-bottom:12px">'+esc(p.note)+'</div>';
+  function renderStagesBody(p, opts){
+    opts = opts || {};
+    var compact = !!opts.compact;
     var stages = p.stages || [];
-    if(!stages.length){
-      html += '<div class="empty">还没有阶段，点「＋ 阶段」开始。</div>';
-      return html;
-    }
+    if(!stages.length) return '<div class="empty">还没有阶段，点「＋ 阶段」开始。</div>';
+    var html = '';
     stages.forEach(function(st, idx){
       var locked = st.status === 'locked';
+      if(compact && locked){
+        html += '<div class="learn-stage is-locked '+statusClass(st.status)+'">'
+          + '<div class="learn-stage-head"><div class="learn-stage-title">'+esc(st.title||('第'+(idx+1)+'阶段'))+'</div>'
+          + '<span class="learn-badge '+statusClass(st.status)+'">'+statusLabel(st.status)+'</span></div></div>';
+        return;
+      }
       html += '<div class="learn-stage '+(locked?'is-locked':'')+' '+statusClass(st.status)+'">'
         + '<div class="learn-stage-head"><div class="learn-stage-title">'+esc(st.title||('第'+(idx+1)+'阶段'))+'</div>'
         + '<span class="learn-badge '+statusClass(st.status)+'">'+statusLabel(st.status)+'</span></div>';
@@ -5071,14 +5104,8 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
         html += '<div class="learn-mod">'
           + '<div class="learn-mod-title">'+esc(m.title||'')+'</div>'
           + (m.desc ? '<div class="learn-mod-desc">'+esc(m.desc)+'</div>' : '')
-          + '<div class="learn-links">';
-        (m.links || []).forEach(function(lk){
-          var cls = lk.style === 'primary' ? 'learn-link primary' : 'learn-link';
-          html += '<a class="'+cls+'" href="'+esc(lk.url)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'
-            + (lk.style==='primary'?'▶ ':'')+esc(lk.label)+'</a>';
-        });
-        html += '</div>';
-        if(!locked){
+          + '<div class="learn-links">'+renderLinkButtons(m.links)+'</div>';
+        if(!locked && !compact){
           html += '<div class="learn-mod-acts">'
             + '<button class="btn" type="button" onclick="openLearnModuleForm(\''+esc(p.id)+'\',\''+esc(st.id)+'\',\''+esc(m.id)+'\')">编辑</button>'
             + '<button class="btn" type="button" onclick="delLearnModule(\''+esc(p.id)+'\',\''+esc(st.id)+'\',\''+esc(m.id)+'\')">删除</button>'
@@ -5088,10 +5115,12 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
       });
       html += '</div>';
       if(!locked){
-        html += '<div class="learn-stage-acts">'
-          + '<button class="btn" type="button" onclick="openLearnModuleForm(\''+esc(p.id)+'\',\''+esc(st.id)+'\')">＋ 子模块</button>'
-          + '<button class="btn" type="button" onclick="openLearnStageForm(\''+esc(p.id)+'\',\''+esc(st.id)+'\')">编辑阶段</button>'
-          + '<button class="btn" type="button" onclick="delLearnStage(\''+esc(p.id)+'\',\''+esc(st.id)+'\')">删除阶段</button>';
+        html += '<div class="learn-stage-acts">';
+        if(!compact){
+          html += '<button class="btn" type="button" onclick="openLearnModuleForm(\''+esc(p.id)+'\',\''+esc(st.id)+'\')">＋ 子模块</button>'
+            + '<button class="btn" type="button" onclick="openLearnStageForm(\''+esc(p.id)+'\',\''+esc(st.id)+'\')">编辑阶段</button>'
+            + '<button class="btn" type="button" onclick="delLearnStage(\''+esc(p.id)+'\',\''+esc(st.id)+'\')">删除阶段</button>';
+        }
         if(st.status === 'active'){
           html += '<button class="btn learn-master" type="button" onclick="masterLearnStage(\''+esc(p.id)+'\',\''+esc(st.id)+'\')">✓ 标记掌握（已达过关标准）</button>';
         }
@@ -5101,6 +5130,57 @@ document.querySelector('#nav .tab[data-cat="work"]').classList.add('active');
     });
     return html;
   }
+
+  function renderStagesPath(p){
+    var html = '<div class="learn-topbar"><button class="btn" type="button" onclick="closeLearnPath()">← 返回</button>'
+      + '<h2 class="learn-h2">'+esc(p.title)+'</h2>'
+      + '<button class="btn" type="button" onclick="openLearnPathForm(\''+esc(p.id)+'\')">编辑路线</button>'
+      + '<button class="btn primary" type="button" onclick="openLearnStageForm(\''+esc(p.id)+'\')">＋ 阶段</button></div>';
+    if(p.note) html += '<div class="hint" style="margin-bottom:12px">'+esc(p.note)+'</div>';
+    html += renderStagesBody(p, { compact: false });
+    return html;
+  }
+
+  function renderLearnOverviewSection(){
+    var list = paths();
+    var html = '<div class="panel learn-home" style="margin-bottom:14px"><div class="sec-head"><h2>📚 学习</h2>'
+      + '<button class="btn" type="button" onclick="ensureLearnAndOpen()">管理路线</button>'
+      + '<button class="btn primary" type="button" onclick="ensureLearnAndNew()">＋ 新建</button></div>';
+    if(!list.length){
+      html += '<div class="empty">学习卡片固定在首页。点「＋ 新建」创建阶段练习或课程列表；外链按钮只显示文案，点击即跳转。</div></div>';
+      return html;
+    }
+    list.forEach(function(p){
+      ensurePathShape(p);
+      html += '<div class="learn-home-path">';
+      html += '<div class="learn-home-path-title" onclick="ensureLearnEnabled();openLearnPath(\''+esc(p.id)+'\');setView(\'learn\')">'
+        + (p.kind==='list'?'🌐 ':'🎻 ')+esc(p.title||'未命名')
+        + (p.subtitle ? '<span class="learn-home-sub"> · '+esc(p.subtitle)+'</span>' : '')
+        + '</div>';
+      if(p.kind === 'list'){
+        var items = (p.items || []).slice(0, 8);
+        if(!items.length) html += '<div class="empty">暂无文章</div>';
+        items.forEach(function(it){
+          html += '<div class="learn-article learn-home-article">'
+            + '<div class="learn-article-title">'+esc(it.title||'')
+            + (it.tag ? ' <span class="learn-tag">'+esc(it.tag)+'</span>' : '') + '</div>'
+            + (it.subtitle ? '<div class="learn-article-sub">'+esc(it.subtitle)+'</div>' : '')
+            + '<div class="learn-links">'
+            + '<button type="button" class="learn-link primary" data-url="'+esc(it.url||'')+'" onclick="event.stopPropagation();openLearnExternalUrl(this)">▶ 打开学习</button>'
+            + '<button type="button" class="btn" onclick="event.stopPropagation();bumpLearnListen(\''+esc(p.id)+'\',\''+esc(it.id)+'\')">已听 +1</button>'
+            + '</div></div>';
+        });
+      } else {
+        if(p.note) html += '<div class="learn-list-note">'+esc(p.note)+'</div>';
+        html += renderStagesBody(p, { compact: true });
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+  global.renderLearnOverviewSection = renderLearnOverviewSection;
+  global.ensureLearnEnabled = ensureLearnEnabled;
 
   function renderListPath(p){
     var items = p.items || [];

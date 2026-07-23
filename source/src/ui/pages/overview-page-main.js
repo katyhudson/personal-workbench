@@ -1,7 +1,11 @@
 (function(global){
   function esc(s){ return global.esc ? global.esc(s) : String(s == null ? '' : s); }
   global.renderOverview = function(){
-    var html='<div class="grid cards">';
+    var html = '';
+    if(typeof global.renderLearnOverviewSection === 'function'){
+      html += global.renderLearnOverviewSection();
+    }
+    html+='<div class="grid cards">';
     for(var c in global.CATS){
       if(global.WorkbenchModules && !global.WorkbenchModules.isCategoryVisible(c)) continue;
       if(c==='finance'){
